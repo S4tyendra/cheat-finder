@@ -1,0 +1,7 @@
+Machine Learning and Artificial Intelligence
+
+Machine learning is a subset of artificial intelligence that focuses on developing systems that can learn and improve from experience. These systems can identify patterns in data and make decisions with minimal human intervention.
+
+Deep learning, a specialized form of machine learning, uses artificial neural networks inspired by the human brain. These networks can process vast amounts of data and learn complex patterns.
+
+Key applications of machine learning include image recognition, natural language processing, and predictive analytics. These technologies are transforming industries from healthcare to finance.

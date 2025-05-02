@@ -1,0 +1,5 @@
+AI systems are transforming complex problem-solving. Machine learning, a crucial part of AI, lets computers learn from data without needing specific instructions.
+
+Deep learning relies on neural networks, inspired by the human brain. These networks are great at recognizing patterns and handling data.
+
+AI is used in healthcare, finance, and computer vision, showing its wide impact.

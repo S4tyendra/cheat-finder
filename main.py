@@ -4,16 +4,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 import tempfile
-from typing import List
+from typing import List, Dict
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from analyzer import analyze_similarity, load_document
 
 app = FastAPI(title="Document Similarity Analyzer")
 
-# Create a templates directory if it doesn't exist
+# Create directories if they don't exist
 TEMPLATES_DIR = Path("templates")
 TEMPLATES_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR = Path("uploads")
@@ -25,13 +26,124 @@ templates = Jinja2Templates(directory="templates")
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-def create_similarity_plot(similarity_data):
-    """Create a heatmap of document similarities"""
-    df = pd.DataFrame(similarity_data)
-    fig = px.imshow(df,
-                    labels=dict(x="Document 2", y="Document 1", color="Similarity"),
-                    title="Document Similarity Heatmap")
-    return fig.to_html(full_html=False)
+def create_similarity_heatmap(similarity_data, file_names):
+    """Create an enhanced heatmap of document similarities"""
+    df = pd.DataFrame(similarity_data, index=file_names, columns=file_names)
+    
+    # Create heatmap with improved styling
+    fig = go.Figure(data=go.Heatmap(
+        z=df.values,
+        x=df.columns,
+        y=df.index,
+        colorscale='RdYlBu_r',
+        zmin=0,
+        zmax=1,
+        hoverongaps=False,
+        hovertemplate='Document 1: %{y}<br>Document 2: %{x}<br>Similarity: %{z:.2f}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title={
+            'text': 'Document Similarity Heatmap',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': dict(size=24)
+        },
+        margin=dict(t=100, l=100, r=50, b=50),
+        height=600,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig.to_html(full_html=False, config={'displayModeBar': True})
+
+def create_similarity_network(similarity_data, file_names, threshold=0.3):
+    """Create a network graph of document similarities"""
+    n_files = len(file_names)
+    edges = []
+    edge_weights = []
+    
+    for i in range(n_files):
+        for j in range(i+1, n_files):
+            if similarity_data[i][j] > threshold:
+                edges.append((i, j))
+                edge_weights.append(similarity_data[i][j])
+    
+    edge_x = []
+    edge_y = []
+    for edge in edges:
+        x0 = np.cos(2*np.pi*edge[0]/n_files)
+        y0 = np.sin(2*np.pi*edge[0]/n_files)
+        x1 = np.cos(2*np.pi*edge[1]/n_files)
+        y1 = np.sin(2*np.pi*edge[1]/n_files)
+        edge_x.extend([x0, x1, None])
+        edge_y.extend([y0, y1, None])
+
+    node_x = [np.cos(2*np.pi*i/n_files) for i in range(n_files)]
+    node_y = [np.sin(2*np.pi*i/n_files) for i in range(n_files)]
+    
+    fig = go.Figure()
+    
+    # Add edges (connections)
+    fig.add_trace(go.Scatter(
+        x=edge_x, y=edge_y,
+        line=dict(width=1, color='#888'),
+        hoverinfo='none',
+        mode='lines'
+    ))
+    
+    # Add nodes
+    fig.add_trace(go.Scatter(
+        x=node_x, y=node_y,
+        mode='markers+text',
+        marker=dict(
+            size=30,
+            color='#1f77b4',
+            line=dict(width=2, color='#fff')
+        ),
+        text=file_names,
+        textposition="top center",
+        hoverinfo='text'
+    ))
+    
+    fig.update_layout(
+        title={
+            'text': 'Document Similarity Network',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': dict(size=24)
+        },
+        showlegend=False,
+        hovermode='closest',
+        margin=dict(t=100, l=50, r=50, b=50),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        height=500,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    return fig.to_html(full_html=False, config={'displayModeBar': True})
+
+def calculate_document_metrics(similarity_matrix: List[List[float]], file_names: List[str]) -> List[Dict]:
+    """Calculate various metrics for each document"""
+    n_files = len(similarity_matrix)
+    metrics = []
+    
+    for i in range(n_files):
+        similarities = similarity_matrix[i]
+        metrics.append({
+            'name': file_names[i],
+            'avg_similarity': sum(similarities) / (n_files - 1),
+            'max_similarity': max(s for j, s in enumerate(similarities) if i != j),
+            'unique_score': 1 - (sum(similarities) / (n_files - 1))
+        })
+    
+    return metrics
 
 def find_similar_content(doc1_path: Path, doc2_path: Path, threshold: float = 0.8):
     """Find potentially copied content between documents"""
@@ -67,23 +179,150 @@ async def home():
     <head>
         <title>Document Similarity Analyzer</title>
         <style>
-            body { font-family: Arial, sans-serif; margin: 40px; }
-            .container { max-width: 800px; margin: 0 auto; }
-            .form-group { margin-bottom: 20px; }
-            .button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-            .results { margin-top: 30px; }
+            :root {
+                --primary-color: #2c3e50;
+                --secondary-color: #3498db;
+                --accent-color: #e74c3c;
+                --background-color: #f8f9fa;
+                --card-background: #ffffff;
+            }
+            
+            body {
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: var(--background-color);
+                color: var(--primary-color);
+                min-height: 100vh;
+            }
+            
+            .header {
+                background-color: var(--primary-color);
+                color: white;
+                padding: 2rem;
+                text-align: center;
+                margin-bottom: 3rem;
+            }
+            
+            .header h1 {
+                margin: 0;
+                font-size: 2.5rem;
+                font-weight: 300;
+            }
+            
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
+            
+            .upload-card {
+                background: var(--card-background);
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                padding: 2rem;
+                margin-bottom: 2rem;
+            }
+            
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            
+            .form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+            }
+            
+            .file-input-container {
+                position: relative;
+                margin: 1rem 0;
+                padding: 2rem;
+                border: 2px dashed var(--secondary-color);
+                border-radius: 8px;
+                text-align: center;
+                transition: all 0.3s ease;
+            }
+            
+            .file-input-container:hover {
+                border-color: var(--primary-color);
+                background-color: rgba(52, 152, 219, 0.05);
+            }
+            
+            .file-input {
+                font-size: 1rem;
+                width: 100%;
+            }
+            
+            .button {
+                background-color: var(--secondary-color);
+                color: white;
+                padding: 1rem 2rem;
+                border: none;
+                border-radius: 4px;
+                font-size: 1.1rem;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+                width: 100%;
+            }
+            
+            .button:hover {
+                background-color: #2980b9;
+            }
+            
+            .features {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+                margin-top: 3rem;
+            }
+            
+            .feature-card {
+                background: var(--card-background);
+                border-radius: 8px;
+                padding: 1.5rem;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            
+            .feature-card h3 {
+                color: var(--secondary-color);
+                margin-top: 0;
+            }
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="header">
             <h1>Document Similarity Analyzer</h1>
-            <form action="/analyze/" method="post" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label>Upload Documents (Max 150 files):</label><br>
-                    <input type="file" name="files" multiple accept=".txt,.doc,.docx,.pdf" required>
+        </div>
+        <div class="container">
+            <div class="upload-card">
+                <form action="/analyze/" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Upload Your Documents</label>
+                        <div class="file-input-container">
+                            <input type="file" name="files" multiple accept=".txt,.doc,.docx,.pdf" required class="file-input">
+                            <p>Drag and drop files here or click to select</p>
+                            <small>Maximum 150 files supported</small>
+                        </div>
+                    </div>
+                    <button type="submit" class="button">Analyze Documents</button>
+                </form>
+            </div>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <h3>Advanced Analysis</h3>
+                    <p>Sophisticated algorithms to detect document similarities and potential content matches.</p>
                 </div>
-                <button type="submit" class="button">Analyze Documents</button>
-            </form>
+                <div class="feature-card">
+                    <h3>Visual Results</h3>
+                    <p>Interactive heatmaps and network graphs to visualize document relationships.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Detailed Metrics</h3>
+                    <p>Comprehensive similarity scores and content analysis for each document.</p>
+                </div>
+            </div>
         </div>
     </body>
     </html>
@@ -132,8 +371,12 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
                             'similar_pairs': similar_pairs
                         })
         
-        # Create visualization
-        plot_html = create_similarity_plot(similarity_matrix)
+        # Create visualizations
+        heatmap_html = create_similarity_heatmap(similarity_matrix, [file.filename for file in files])
+        network_html = create_similarity_network(similarity_matrix, [file.filename for file in files])
+        
+        # Calculate document metrics
+        metrics = calculate_document_metrics(similarity_matrix, [file.filename for file in files])
         
         # Create result HTML
         result_html = f"""
@@ -147,6 +390,9 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
                 .similarity-plot {{ margin: 20px 0; }}
                 .similar-content {{ margin: 20px 0; }}
                 .similar-pair {{ margin: 10px 0; padding: 10px; background: #f5f5f5; }}
+                .metrics-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+                .metrics-table th, .metrics-table td {{ border: 1px solid #ddd; padding: 8px; }}
+                .metrics-table th {{ background-color: #f2f2f2; }}
             </style>
         </head>
         <body>
@@ -154,7 +400,30 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
                 <h1>Analysis Results</h1>
                 <div class="similarity-plot">
                     <h2>Similarity Heatmap</h2>
-                    {plot_html}
+                    {heatmap_html}
+                </div>
+                <div class="similarity-plot">
+                    <h2>Similarity Network</h2>
+                    {network_html}
+                </div>
+                <div class="metrics">
+                    <h2>Document Metrics</h2>
+                    <table class="metrics-table">
+                        <tr>
+                            <th>Document</th>
+                            <th>Average Similarity</th>
+                            <th>Max Similarity</th>
+                            <th>Unique Score</th>
+                        </tr>
+                        {''.join(f"""
+                        <tr>
+                            <td>{metric['name']}</td>
+                            <td>{metric['avg_similarity']:.2f}</td>
+                            <td>{metric['max_similarity']:.2f}</td>
+                            <td>{metric['unique_score']:.2f}</td>
+                        </tr>
+                        """ for metric in metrics)}
+                    </table>
                 </div>
                 <div class="similar-content">
                     <h2>Potentially Copied Content</h2>
