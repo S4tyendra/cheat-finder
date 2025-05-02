@@ -1,7 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 import os
 import tempfile
 from typing import List, Dict
@@ -14,23 +12,15 @@ from analyzer import analyze_similarity, load_document
 
 app = FastAPI(title="Document Similarity Analyzer")
 
-# Create directories if they don't exist
-TEMPLATES_DIR = Path("templates")
-TEMPLATES_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# Setup templates
-templates = Jinja2Templates(directory="templates")
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def create_similarity_heatmap(similarity_data, file_names):
     """Create an enhanced heatmap of document similarities"""
     df = pd.DataFrame(similarity_data, index=file_names, columns=file_names)
     
-    # Create heatmap with improved styling
     fig = go.Figure(data=go.Heatmap(
         z=df.values,
         x=df.columns,
@@ -86,7 +76,7 @@ def create_similarity_network(similarity_data, file_names, threshold=0.3):
     
     fig = go.Figure()
     
-    # Add edges (connections)
+    # edges (connections)
     fig.add_trace(go.Scatter(
         x=edge_x, y=edge_y,
         line=dict(width=1, color='#888'),
@@ -94,7 +84,7 @@ def create_similarity_network(similarity_data, file_names, threshold=0.3):
         mode='lines'
     ))
     
-    # Add nodes
+    # nodes
     fig.add_trace(go.Scatter(
         x=node_x, y=node_y,
         mode='markers+text',
@@ -153,7 +143,7 @@ def find_similar_content(doc1_path: Path, doc2_path: Path, threshold: float = 0.
     if doc1_content is None or doc2_content is None:
         return []
     
-    # Split into sentences
+    # Split as sentences
     doc1_sentences = [s.strip() for s in doc1_content.split('.') if s.strip()]
     doc2_sentences = [s.strip() for s in doc2_content.split('.') if s.strip()]
     
@@ -335,7 +325,6 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
     if len(files) > 150:
         raise HTTPException(status_code=400, detail="Maximum 150 files allowed")
     
-    # Save uploaded files temporarily
     temp_files = []
     try:
         for file in files:
@@ -345,7 +334,7 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
                 temp_file.write(content)
                 temp_files.append(Path(temp_file.name))
         
-        # Create similarity matrix
+        # similarity matrix
         n_files = len(temp_files)
         similarity_matrix = [[0.0] * n_files for _ in range(n_files)]
         similar_content = []
@@ -361,7 +350,7 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
                 similarity_matrix[i][j] = similarity_score
                 similarity_matrix[j][i] = similarity_score
                 
-                # If similarity is high, find similar content
+               
                 if similarity_score > 0.7:
                     similar_pairs = find_similar_content(temp_files[i], temp_files[j])
                     if similar_pairs:
@@ -371,14 +360,12 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
                             'similar_pairs': similar_pairs
                         })
         
-        # Create visualizations
         heatmap_html = create_similarity_heatmap(similarity_matrix, [file.filename for file in files])
         network_html = create_similarity_network(similarity_matrix, [file.filename for file in files])
         
-        # Calculate document metrics
-        metrics = calculate_document_metrics(similarity_matrix, [file.filename for file in files])
+        metrics = calculate_document_metrics(similarity_matrix, [file.filename for file in files]) # type: ignore
         
-        # Create result HTML
+        # result HTML
         result_html = f"""
         <!DOCTYPE html>
         <html>
@@ -446,7 +433,7 @@ async def analyze_documents(files: List[UploadFile] = File(...)):
         return HTMLResponse(content=result_html)
         
     finally:
-        # Cleanup temporary files
+        # Cleanup
         for temp_file in temp_files:
             try:
                 os.unlink(temp_file)
