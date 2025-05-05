@@ -165,157 +165,399 @@ async def home():
     """Render the home page with file upload form"""
     html_content = """
     <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Document Similarity Analyzer</title>
-        <style>
-            :root {
-                --primary-color: #2c3e50;
-                --secondary-color: #3498db;
-                --accent-color: #e74c3c;
-                --background-color: #f8f9fa;
-                --card-background: #ffffff;
-            }
-            
-            body {
-                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: var(--background-color);
-                color: var(--primary-color);
-                min-height: 100vh;
-            }
-            
-            .header {
-                background-color: var(--primary-color);
-                color: white;
-                padding: 2rem;
-                text-align: center;
-                margin-bottom: 3rem;
-            }
-            
-            .header h1 {
-                margin: 0;
-                font-size: 2.5rem;
-                font-weight: 300;
-            }
-            
-            .container {
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 2rem;
-            }
-            
-            .upload-card {
-                background: var(--card-background);
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                padding: 2rem;
-                margin-bottom: 2rem;
-            }
-            
-            .form-group {
-                margin-bottom: 1.5rem;
-            }
-            
-            .form-group label {
-                display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 500;
-            }
-            
-            .file-input-container {
-                position: relative;
-                margin: 1rem 0;
-                padding: 2rem;
-                border: 2px dashed var(--secondary-color);
-                border-radius: 8px;
-                text-align: center;
-                transition: all 0.3s ease;
-            }
-            
-            .file-input-container:hover {
-                border-color: var(--primary-color);
-                background-color: rgba(52, 152, 219, 0.05);
-            }
-            
-            .file-input {
-                font-size: 1rem;
-                width: 100%;
-            }
-            
-            .button {
-                background-color: var(--secondary-color);
-                color: white;
-                padding: 1rem 2rem;
-                border: none;
-                border-radius: 4px;
-                font-size: 1.1rem;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-                width: 100%;
-            }
-            
-            .button:hover {
-                background-color: #2980b9;
-            }
-            
-            .features {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 1.5rem;
-                margin-top: 3rem;
-            }
-            
-            .feature-card {
-                background: var(--card-background);
-                border-radius: 8px;
-                padding: 1.5rem;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            
-            .feature-card h3 {
-                color: var(--secondary-color);
-                margin-top: 0;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>Document Similarity Analyzer</h1>
-        </div>
-        <div class="container">
-            <div class="upload-card">
-                <form action="/analyze/" method="post" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label>Upload Your Documents</label>
-                        <div class="file-input-container">
-                            <input type="file" name="files" multiple accept=".txt,.doc,.docx,.pdf" required class="file-input">
-                            <p>Drag and drop files here or click to select</p>
-                            <small>Maximum 150 files supported</small>
-                        </div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Similarity Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and Base Styles */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --background-color: #121212; /* Dark background */
+    --card-background: rgba(40, 40, 40, 0.6); /* Semi-transparent dark card */
+    --backdrop-blur: 10px; /* Blur effect for glassmorphism */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-color: #e0e0e0; /* Light text */
+    --text-secondary: #a0a0a0; /* Dimmed text */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple-blue gradient */
+    --accent-color: #667eea; /* Primary color from gradient */
+    --hover-brightness: 1.15;
+    --border-radius: 12px; /* Softer corners */
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    background-image: url('background.png'); /* Optional: Subtle background pattern */
+    background-size: cover;
+    background-attachment: fixed;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    padding: 3rem 1rem 2rem;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2); /* Slight overlay */
+    margin-bottom: 3rem;
+    position: relative; /* For potential pseudo-elements */
+}
+
+.header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent; /* Apply gradient to text */
+    display: inline-block; /* Needed for text gradient */
+}
+
+.header .subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+}
+
+/* Container */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem; /* Add bottom padding */
+}
+
+/* Glassmorphism Card Style */
+.glassmorphism {
+    background: var(--card-background);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(var(--backdrop-blur));
+    -webkit-backdrop-filter: blur(var(--backdrop-blur)); /* Safari support */
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glassmorphism:hover {
+    /* Optional: Slight lift effect on hover */
+    /* transform: translateY(-5px); */
+    /* box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); */
+}
+
+.upload-card {
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.file-input-container {
+    position: relative;
+    padding: 2.5rem 1.5rem;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.file-input-container:hover {
+    border-color: var(--accent-color);
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    stroke: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.file-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.drag-drop-text {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.drag-drop-text strong {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.file-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+#file-list {
+    margin-top: 1rem;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+#file-list div {
+    margin-bottom: 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.button {
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem; 
+    color: white;
+    padding: 0.9rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.3s ease;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gradient-button {
+    background: var(--primary-gradient);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.button:hover {
+    filter: brightness(var(--hover-brightness));
+    transform: translateY(-2px); 
+}
+
+.button:active {
+    transform: translateY(0);
+    filter: brightness(1);
+}
+
+.button-icon {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+}
+
+.feature-card {
+    text-align: center; 
+}
+
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    stroke: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2.5rem;
+    }
+    .container {
+        padding: 0 1rem 3rem;
+    }
+    .glassmorphism {
+        padding: 1.5rem;
+    }
+    .features {
+        grid-template-columns: 1fr; 
+    }
+    .button {
+        font-size: 1rem;
+        padding: 0.8rem 1.5rem;
+    }
+    .file-input-container {
+        padding: 2rem 1rem;
+    }
+}
+
+
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Docu<span class="highlight">Sim</span> Analyzer</h1>
+        <p class="subtitle">Modern Document Similarity Analysis</p>
+    </div>
+    <div class="container">
+        <div class="upload-card glassmorphism">
+            <form action="/analyze/" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file-upload">Upload Your Documents</label>
+                    <div class="file-input-container">
+                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="upload-icon">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                         </svg>
+                        <input type="file" id="file-upload" name="files" multiple accept=".txt,.doc,.docx,.pdf" required class="file-input">
+                        <p class="drag-drop-text">Drag & drop files here or <strong>click to select</strong></p>
+                        <small class="file-info">Supports: .txt, .doc, .docx, .pdf (Max 150 files)</small>
+                        <div id="file-list"></div>
                     </div>
-                    <button type="submit" class="button">Analyze Documents</button>
-                </form>
+                </div>
+                <button type="submit" class="button gradient-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="button-icon">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 004.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L4.2 15.3m15.6 0c1.636 0 2.962 1.326 2.962 2.962v.408c0 .836-.335 1.596-.876 2.14l-.992.992a.999.999 0 01-1.413 0l-1.172-1.172a.999.999 0 00-1.414 0l-.992.992a.749.749 0 01-1.06 0l-1.172-1.172a.749.749 0 00-1.06 0L12 19.468l-.992.992a.749.749 0 01-1.06 0l-1.172-1.172a.749.749 0 00-1.06 0l-.992.992a.999.999 0 01-1.414 0l-1.172-1.172a.999.999 0 00-1.414 0l-.992.992a.749.749 0 01-1.06 0l-1.172-1.172a.999.999 0 00-1.414 0l-1.57-.393m15.6 0c-3.436 0-6.23.693-6.23 1.562 0 .868 2.794 1.562 6.23 1.562 3.436 0 6.23-.694 6.23-1.562 0-.87-2.794-1.562-6.23-1.562z" />
+                    </svg>
+                    Analyze Documents
+                </button>
+            </form>
+        </div>
+
+        <div class="features">
+            <div class="feature-card glassmorphism">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="feature-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                 </svg>
+                <h3>Advanced Analysis</h3>
+                <p>Sophisticated algorithms detect subtle similarities and potential content matches.</p>
             </div>
-            
-            <div class="features">
-                <div class="feature-card">
-                    <h3>Advanced Analysis</h3>
-                    <p>Sophisticated algorithms to detect document similarities and potential content matches.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Visual Results</h3>
-                    <p>Interactive heatmaps and network graphs to visualize document relationships.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Detailed Metrics</h3>
-                    <p>Comprehensive similarity scores and content analysis for each document.</p>
-                </div>
+            <div class="feature-card glassmorphism">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="feature-icon">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <h3>Visual Results</h3>
+                <p>Interactive heatmaps and network graphs visualize document relationships clearly.</p>
+            </div>
+            <div class="feature-card glassmorphism">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="feature-icon">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                 </svg>
+                <h3>Detailed Metrics</h3>
+                <p>Comprehensive similarity scores and detailed content analysis for each document pair.</p>
             </div>
         </div>
-    </body>
-    </html>
+    </div>
+    <script>
+        const fileInput = document.getElementById('file-upload');
+const fileListDisplay = document.getElementById('file-list');
+const fileInputContainer = document.querySelector('.file-input-container');
+const dragDropText = document.querySelector('.drag-drop-text');
+
+function updateFileList() {
+    fileListDisplay.innerHTML = ''; 
+    if (fileInput.files.length > 0) {
+        dragDropText.style.display = 'none'; // Hide initial text
+        const list = document.createElement('div');
+        list.innerHTML = `<strong>Selected Files (${fileInput.files.length}):</strong>`;
+        for (let i = 0; i < fileInput.files.length; i++) {
+            const fileItem = document.createElement('div');
+            fileItem.textContent = `- ${fileInput.files[i].name}`;
+            list.appendChild(fileItem);
+        }
+        fileListDisplay.appendChild(list);
+    } else {
+        dragDropText.style.display = 'block'; 
+    }
+}
+
+fileInput.addEventListener('change', updateFileList);
+
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  fileInputContainer.addEventListener(eventName, preventDefaults, false);
+  document.body.addEventListener(eventName, preventDefaults, false); // Prevent drop outside area
+});
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+  fileInputContainer.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  fileInputContainer.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+  fileInputContainer.style.borderColor = 'var(--accent-color)';
+  fileInputContainer.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
+}
+
+function unhighlight(e) {
+  fileInputContainer.style.borderColor = 'var(--border-color)';
+  fileInputContainer.style.backgroundColor = 'transparent';
+}
+
+fileInputContainer.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+
+  fileInput.files = files;
+
+  updateFileList();
+}
+updateFileList();
+
+
+    </script>
+</body>
+</html>
+
+
     """
     return HTMLResponse(content=html_content)
 
