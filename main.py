@@ -40,7 +40,7 @@ def create_similarity_heatmap(similarity_data, file_names):
         z=df.values,
         x=df.columns,
         y=df.index,
-        colorscale='RdYlBu_r',
+        colorscale='Plasma',
         zmin=0,
         zmax=1,
         hoverongaps=False,
@@ -54,12 +54,15 @@ def create_similarity_heatmap(similarity_data, file_names):
             'x': 0.5,
             'xanchor': 'center',
             'yanchor': 'top',
-            'font': dict(size=24)
+            'font': dict(size=24, color='#e0e0e0')
         },
         margin=dict(t=100, l=100, r=50, b=50),
         height=600,
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e0e0e0'),
+        xaxis=dict(tickfont=dict(color='#e0e0e0')),
+        yaxis=dict(tickfont=dict(color='#e0e0e0'))
     )
     
     return fig.to_html(full_html=False, config={'displayModeBar': True})
@@ -94,7 +97,7 @@ def create_similarity_network(similarity_data, file_names, threshold=0.3):
     # edges (connections)
     fig.add_trace(go.Scatter(
         x=edge_x, y=edge_y,
-        line=dict(width=1, color='#888'),
+        line=dict(width=1, color='rgba(255, 255, 255, 0.3)'),
         hoverinfo='none',
         mode='lines'
     ))
@@ -105,11 +108,12 @@ def create_similarity_network(similarity_data, file_names, threshold=0.3):
         mode='markers+text',
         marker=dict(
             size=30,
-            color='#1f77b4',
-            line=dict(width=2, color='#fff')
+            color='#667eea',
+            line=dict(width=2, color='#ffffff')
         ),
         text=file_names,
         textposition="top center",
+        textfont=dict(color='#e0e0e0'),
         hoverinfo='text'
     ))
     
@@ -120,7 +124,7 @@ def create_similarity_network(similarity_data, file_names, threshold=0.3):
             'x': 0.5,
             'xanchor': 'center',
             'yanchor': 'top',
-            'font': dict(size=24)
+            'font': dict(size=24, color='#e0e0e0')
         },
         showlegend=False,
         hovermode='closest',
@@ -129,7 +133,8 @@ def create_similarity_network(similarity_data, file_names, threshold=0.3):
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         height=500,
         paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)'
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e0e0e0')
     )
     
     return fig.to_html(full_html=False, config={'displayModeBar': True})
