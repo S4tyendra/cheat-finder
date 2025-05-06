@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #121212;
+            --card-background: rgba(40, 40, 40, 0.6);
+            --backdrop-blur: 12px;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-color: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-color: #667eea;
+            --border-radius: 12px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--background-color) url('{{ url_for("static", path="bg.webp") }}') center/cover fixed;
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .glassmorphism {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(var(--backdrop-blur));
+            -webkit-backdrop-filter: blur(var(--backdrop-blur));
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        .similarity-plot {
+            margin-bottom: 3rem;
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .metrics-table th,
+        .metrics-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .metrics-table th {
+            background: rgba(102, 126, 234, 0.1);
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .metrics-table tr {
+            transition: var(--transition);
+        }
+
+        .metrics-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .metrics-table td {
+            color: var(--text-secondary);
+        }
+
+        .similar-pair {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .similar-pair:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .similar-pair p {
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .similar-pair p:first-of-type {
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .similar-pair hr {
+            margin: 1rem 0;
+            border: none;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .glassmorphism {
+                padding: 1.5rem;
+            }
+
+            .metrics-table th,
+            .metrics-table td {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .similar-pair {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Analysis Results</h1>
+        <div class="similarity-plot glassmorphism">
+            <h2>Similarity Heatmap</h2>
+            {{ heatmap_html | safe }}
+        </div>
+        <div class="similarity-plot glassmorphism">
+            <h2>Similarity Network</h2>
+            {{ network_html | safe }}
+        </div>
+        <div class="metrics glassmorphism">
+            <h2>Document Metrics</h2>
+            <table class="metrics-table">
+                <tr>
+                    <th>Document</th>
+                    <th>Average Similarity</th>
+                    <th>Max Similarity</th>
+                    <th>Unique Score</th>
+                </tr>
+                {% for metric in metrics %}
+                <tr>
+                    <td>{{ metric['name'] }}</td>
+                    <td>{{ "%.2f"|format(metric['avg_similarity']) }}</td>
+                    <td>{{ "%.2f"|format(metric['max_similarity']) }}</td>
+                    <td>{{ "%.2f"|format(metric['unique_score']) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="similar-content glassmorphism">
+            <h2>Potentially Copied Content</h2>
+            {% for pair in similar_content %}
+            <div class="similar-pair">
+                <h3>Similar content between {{ pair['file1'] }} and {{ pair['file2'] }}</h3>
+                {% for match in pair['similar_pairs'] %}
+                <p>Similarity: {{ "%.2f"|format(match['similarity']) }}</p>
+                <p>Document 1: {{ match['doc1_sentence'] }}</p>
+                <p>Document 2: {{ match['doc2_sentence'] }}</p>
+                <hr>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
